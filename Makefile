@@ -1,4 +1,4 @@
-SRC = ft_printf.c printf_utils.c short_utils.c short_utils_two.c
+SRC = Mandel.c firstfract.c
 
 CC = gcc
 

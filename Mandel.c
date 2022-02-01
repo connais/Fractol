@@ -1,12 +1,12 @@
 #include <stdio.h>
-#include <mlx.h>
+#include "mlx.h"
 int main()
 {
 	int		x = 0;
 	int		y = 0;
 	double	pr, pi;
 	double	nRe, nIm, oRe, oIm;
-	double	zoom = 1, mx = 0, my = 0;
+	double	zoom = 1, mx = -0.74364, my = 0.13182;
 	int		MaxIt = 5000; 
 	void		*mlx_ptr;
 	void		*win_ptr;
@@ -18,7 +18,7 @@ int main()
 	{
 		while(x < 1000)
 		{
-			pr = 1.0 * (x - 1000 / 2) / (0.5 * zoom * 1000) + mx;
+			pr = 1.5 * (x - 1000 / 2) / (0.5 * zoom * 1000) + mx;
 			pi = (y - 500 / 2) / (0.5 * zoom * 500) + my;
 			nRe = nIm = oRe = oIm = 0;
 			int i = 0;
