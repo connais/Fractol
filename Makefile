@@ -1,27 +1,24 @@
-SRC = Mandel.c firstfract.c
+SRC = firstfract.c structure.c Mandel.c
 
-CC = gcc
+NAME = fractol
 
-HEADER = libftprintf.h
+CC = gcc 
 
-OBJ = $(SRC:.c=.o)
+HEADER = fractol.h
 
-NAME = libftprintf.a
+LIBX = -I minilib_mms -L minilibx
+
+FLAGS	= -Wall -Wextra -Werror  
+
+OBJ = firstfract.o structure.o Mandel.o
+
 
 RM = rm -f
 
-LIBC = ar -rc
+all	: ${NAME}
 
-CFLAGS	= -Wall -Wextra -Werror
-
-%.o : %.c
-	$(CC) ${CFLAGS} -I. -o $@ -c $?
-
-${NAME} : $(OBJ)
-	${LIBC} ${NAME} ${OBJ}
-
-all :	${NAME} 
-
+$(NAME): ${OBJ}
+		${CC} ${FLAGS} -o ${NAME} $(LIBX) $(SRC) -g -L. -lmlx -lXext -lX11 -lm
 clean :
 	${RM} ${OBJ}
 

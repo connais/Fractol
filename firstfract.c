@@ -1,54 +1,23 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include"mlx.h"
-typedef struct	t_coordon{
-	int		x_new;
-	int		y_new;
-	int		x;
-	int		y;
-	int		mx;
-	int		my;
-}	s_coordon;
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   firstfract.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: avaures <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/02/03 16:25:53 by avaures           #+#    #+#             */
+/*   Updated: 2022/02/03 18:48:25 by avaures          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-typedef struct	s_data {
-	void		*img;
-	char		*addr;
-	int		bits_per_pixel;
-	int		line_length;
-	int		endian;
-}				t_data;
-typedef struct	s_vars {
-	void	*mlx;
-	void	*win;
-	int	zoom;
-	t_data 	img;	
-}				t_vars;
+#include "fractol.h"
 
-s_coordon make_coor(s_coordon coor, int x)
+int	mouse_hook(int button, int o, int y, t_vars *stru)
 {
-	coor.x_new = x;
-	coor.y_new = x;
-	coor.x = x;
-	coor.y = x;
-	coor.my = x;
-	coor.mx = x;
-	return (coor);
-}
-int ftclose(int keycode, t_vars *vars)
-{
-	if (keycode == 53)
-		mlx_destroy_window(vars->mlx, vars->win);
-	return (0);
-}
+	int	x;
 
-int mouse_hook(int button, int o, int y, t_vars *stru)
-{
-	int x;
-
-	(void)o;
-	(void)y;
+	(void) o;
+	(void) y;
 	x = 1;
 	if (button == 4)
 		stru->zoom += x;
@@ -57,88 +26,103 @@ int mouse_hook(int button, int o, int y, t_vars *stru)
 	return (0);
 }
 
-void	my_mlx_pixel_put(t_data *data, int x, int y, int color)
+void	put_pixel_julia(t_vars *vars, t_coordon coords)
 {
-	char	*dst;
-
-	dst = data->addr + (y * data->line_length + x * (data->bits_per_pixel / 8));
-	*(unsigned int*)dst = color;
+	my_mlx_pixel_put(&((t_vars *)vars)->img, coords.x, \
+	coords.y, 0x0101DF * coords.incr);
+	return ;
 }
 
-int render_next_frame(void *stru)
+void	old_new_julia(t_complex *comple)
 {
-	s_coordon	coords;
+	comple->old_re = comple->new_re;
+	comple->old_im = comple->new_im;
+	return ;
+}
+
+void	calc_fract(double cRe, double cI, t_vars *fract)
+{
+	t_coordon	coords;
+	t_complex	comple;
+
 	coords = make_coor(coords, 0);
-	int static	xo = 0;
-	int static 	yo = 0;
-//	int 		xn = 0;
-//	int 		yn = 0;
-//	int		x = 0;
-//	int		y = 0;
-	double	cRe, cI;
-	double	nRe, nIm, oRe, oIm;
-	double	mx = 0, my = 0;
-	int		MaxIt = 100; 
-	int static	zoom_static = 0;
-	
-	mlx_mouse_get_pos(((t_vars *)stru)->mlx , ((t_vars *)stru)->win, &coords.x_new, &coords.y_new);	
-	if (zoom_static != ((t_vars *)stru)->zoom || xo != coords.x_new || yo != coords.y_new)
+	while (coords.y++ < 500)
 	{
-		cRe = 0.285 + ((double)coords.x_new/1000)*0.5;
-		cI = 0.01 + ((double)coords.y_new/500)*0.5;
-		while (coords.y < 500)
+		while (coords.x++ < 1000)
 		{
-			while(coords.x < 1000)
+			comple.new_re = 1.5 * (coords.x - 1000 / 2) / \
+			(0.5 * ((t_vars *)fract)->zoom * 1000) + coords.mx;
+			comple.new_im = (coords.y - 500 / 2) / \
+			(0.5 * ((t_vars *)fract)->zoom * 500) + coords.my;
+			coords.incr = 0;
+			while (coords.incr++ < coords.max_it && (comple.new_re \
+			* comple.new_re + comple.new_im * comple.new_im) <= 4)
 			{
-				nRe = 1.5 * (coords.x - 1000 / 2) / (0.5 * ((t_vars *)stru)->zoom * 1000) + mx;
-				nIm = (coords.y - 500 / 2) / (0.5 * ((t_vars *)stru)->zoom * 500) + my;
-				int i = 0;
-				while (i < MaxIt && (nRe * nRe + nIm * nIm) <= 4)
-				{
-					oRe = nRe;
-					oIm = nIm;
-					nRe = oRe * oRe - oIm * oIm + cRe;
-					nIm = 2 * oRe * oIm + cI;
-					i++;
-				}
-				my_mlx_pixel_put(&((t_vars *)stru)->img, coords.x, coords.y, 0x0101DF * i);
-				coords.x++;
+				old_new_julia(&comple);
+				comple.new_re = comple.old_re * \
+				comple.old_re - comple.old_im * comple.old_im + cRe;
+				comple.new_im = 2 * comple.old_re * comple.old_im + cI;
 			}
-			coords.x = 0;
-			coords.y++;
+			put_pixel_julia(fract, coords);
 		}
-	
+		coords.x = 0;
+	}
+	return ;
+}
+
+int	render_next_frame(void *stru)
+{
+	t_coordon	coords;
+	static int	xo;
+	static int	yo;
+	static int	zoom_static;
+	double		c_re;
+	double		c_im;
+
+	xo = 0;
+	yo = 0;
+	zoom_static = 0;
+	coords = make_coor(coords, 0);
+	mlx_mouse_get_pos(((t_vars *)stru)->mlx, \
+	((t_vars *)stru)->win, &coords.x_new, &coords.y_new);
+	if (zoom_static != ((t_vars *)stru)->zoom || \
+	xo != coords.x_new || yo != coords.y_new)
+	{
+		c_re = 0.285 + ((double)coords.x_new / 1000) * 0.5;
+		c_im = 0.01 + ((double)coords.y_new / 500) * 0.5;
+		calc_fract(c_re, c_im, stru);
 		zoom_static = ((t_vars *)stru)->zoom;
 		xo = coords.x_new;
 		yo = coords.y_new;
-		mlx_put_image_to_window(((t_vars *)stru)->mlx,((t_vars *)stru)->win, ((t_vars *)stru)->img.img, 200, 200);
+		mlx_put_image_to_window(((t_vars *)stru)->mlx, \
+		((t_vars *)stru)->win, ((t_vars *)stru)->img.img, 0, 0);
 	}
 	return (0);
 }
 
-int main(int argc, char **argv)
+int	main(int argc, char **argv)
 {
-	printf("%d", argc);
-	if (argc < 2 || strcmp(argv[1], "MANDELBROT") != 0 && strcmp(argv[1], "JULIA") != 0)
+	t_vars	vars;
+	t_data	img;
+
+	if (argc < 2 || (strcmp(argv[1], "MANDELBROT") \
+	!= 0 && strcmp(argv[1], "JULIA") != 0))
+		write(1, "JULIA\nMANDELBROT", 16);
+	else
 	{
-		write(1, "JULIA", 5);
-		write(1, "\n", 1);
-		write(1, "MANDELBROT", 10);
-		return (0);
-	}
-	else 
-	{
-		t_vars	vars;
-		t_data	img;
 		vars.mlx = mlx_init();
-		vars.win = mlx_new_window(vars.mlx, 2000, 1000, "opWin");
+		vars.win = mlx_new_window(vars.mlx, 1000, 500, argv[1]);
 		vars.zoom = 1;
-		mlx_hook(vars.win, 2, 1L<<0, ftclose, &vars);
+		mlx_hook(vars.win, 2, 1L << 0, ftclose, &vars);
 		img.img = mlx_new_image(vars.mlx, 1000, 500);
 		mlx_mouse_hook(vars.win, mouse_hook, &vars);
-		img.addr = mlx_get_data_addr(img.img, &img.bits_per_pixel, &img.line_length, &img.endian);
+		img.addr = mlx_get_data_addr(img.img, \
+		&img.bits_per_pixel, &img.line_length, &img.endian);
 		vars.img = img;
-		mlx_loop_hook(vars.mlx, render_next_frame, (void *)&vars);
+		if (strcmp(argv[1], "JULIA") == 0)
+			mlx_loop_hook(vars.mlx, render_next_frame, (void *)&vars);
+		else
+			mlx_loop_hook(vars.mlx, calc_mandel, (void *)&vars);
 		mlx_loop(vars.mlx);
 	}
 	return (0);
